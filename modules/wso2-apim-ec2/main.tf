@@ -68,23 +68,36 @@ resource "aws_instance" "this" {
 
   key_name = aws_key_pair.this.key_name
 
+  connection {
+    type = "ssh"
+    user = "ec2-user"
+    host = aws_instance.this.public_dns
+    private_key = file("resources/ssh-key/wso2-apim-aws")
+  }
+
   provisioner "remote-exec" {
     inline = [
       "sudo yum update -y",
       "sudo amazon-linux-extras install -y docker",
       "sudo service docker start",
-      "sudo usermod -a -G docker ec2-user"
+      "sudo usermod -a -G docker ec2-user",
     ]
+  }
 
-    connection {
-      type = "ssh"
-      user = "ec2-user"
-      host = aws_instance.this.public_dns
-      private_key = file("resources/ssh-key/wso2-apim-aws")
-    }
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum install -y git",
+      "git clone https://github.com/wso2/docker-apim.git",
+      "cd docker-apim/",
+      "git fetch --tags",
+      "git checkout tags/v2.6.0.7 -b apim",
+      "cd dockerfiles/alpine/apim",
+      "docker build -t wso2am:2.6.0-alpine .",
+      "docker run -it -p 8280:8280 -p 8243:8243 -p 9443:9443 --name api-manager wso2am:2.6.0-alpine",
+    ]
   }
 
   tags = {
-    Name = "SETF-WSO2-APIM-Security-Group"
+    Name = "SETF-WSO2-APIM"
   }
 }
