@@ -2,17 +2,17 @@ data "aws_ami" "amazon_ami" {
   most_recent = true
 
   filter {
-    name   = "name"
+    name = "name"
     values = ["amzn2-*"]
   }
 
   filter {
-    name   = "virtualization-type"
+    name = "virtualization-type"
     values = ["hvm"]
   }
 
   filter {
-    name   = "architecture"
+    name = "architecture"
     values = ["x86_64"]
   }
 
@@ -29,31 +29,31 @@ resource "aws_security_group" "this" {
   description = "Default security group that allows inbound and outbound traffic from all instances in the VPC"
 
   ingress {
-    from_port   = "0"
-    to_port     = "0"
-    protocol    = "-1"
+    from_port = "0"
+    to_port = "0"
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    self        = true
+    self = true
   }
 
   ingress {
     from_port = 22
-    to_port   = 22
-    protocol  = "tcp"
+    to_port = 22
+    protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port   = "0"
-    to_port     = "0"
-    protocol    = "-1"
+    from_port = "0"
+    to_port = "0"
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    self        = true
+    self = true
   }
   egress {
     from_port = 22
-    to_port   = 22
-    protocol  = "tcp"
+    to_port = 22
+    protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -67,6 +67,13 @@ resource "aws_instance" "this" {
   instance_type = "t3a.medium"
 
   key_name = aws_key_pair.this.key_name
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = "20"
+    delete_on_termination = true
+    encrypted = false
+  }
 
   connection {
     type = "ssh"
@@ -93,7 +100,7 @@ resource "aws_instance" "this" {
       "git checkout tags/v2.6.0.7 -b apim",
       "cd dockerfiles/alpine/apim",
       "docker build -t wso2am:2.6.0-alpine .",
-      "docker run -it -p 8280:8280 -p 8243:8243 -p 9443:9443 --name api-manager wso2am:2.6.0-alpine",
+      "docker run -dt -p 8280:8280 -p 8243:8243 -p 9443:9443 --name api-manager wso2am:2.6.0-alpine",
     ]
   }
 
