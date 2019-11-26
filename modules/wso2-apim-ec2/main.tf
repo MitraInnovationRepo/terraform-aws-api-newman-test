@@ -3,20 +3,25 @@ data "aws_ami" "amazon_ami" {
 
   filter {
     name = "name"
-    values = ["amzn2-*"]
+    values = [
+      "amzn2-*"]
   }
 
   filter {
     name = "virtualization-type"
-    values = ["hvm"]
+    values = [
+      "hvm"]
   }
 
   filter {
     name = "architecture"
-    values = ["x86_64"]
+    values = [
+      "x86_64"]
   }
 
-  owners = ["137112412989"] // amazon = 137112412989
+  owners = [
+    "137112412989"]
+  // amazon = 137112412989
 }
 
 # VPC
@@ -38,12 +43,12 @@ resource "aws_subnet" "public" {
 
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
-//  tags = var.tags
+  //  tags = var.tags
 }
 
 resource "aws_route_table" "this" {
   vpc_id = aws_vpc.this.id
-//  tags = var.tags
+  //  tags = var.tags
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -71,7 +76,8 @@ resource "aws_security_group" "this" {
     from_port = "8280"
     to_port = "8280"
     protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "0.0.0.0/0"]
     self = true
   }
 
@@ -79,7 +85,8 @@ resource "aws_security_group" "this" {
     from_port = "8243"
     to_port = "8243"
     protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "0.0.0.0/0"]
     self = true
   }
 
@@ -87,7 +94,8 @@ resource "aws_security_group" "this" {
     from_port = "9443"
     to_port = "9443"
     protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "0.0.0.0/0"]
     self = true
   }
 
@@ -95,26 +103,50 @@ resource "aws_security_group" "this" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "0.0.0.0/0"]
   }
 
   egress {
     from_port = "0"
     to_port = "0"
     protocol = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "0.0.0.0/0"]
     self = true
   }
   egress {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "0.0.0.0/0"]
   }
 
   tags = {
     Name = "SETF-WSO2-APIM-Security-Group"
   }
+}
+
+data "aws_eip" "this" {
+  tags = {
+    Name = "SETF-WSO2-APIM-EIP"
+  }
+}
+
+resource "aws_eip_association" "eip_assoc" {
+  instance_id = aws_instance.this.id
+  allocation_id = data.aws_eip.this.id
+  private_ip_address = "10.1.1.10"
+
+  depends_on = [
+    "aws_internet_gateway.this"
+  ]
+}
+
+resource aws_eip "this" {
+  vpc = true
+
 }
 
 resource "aws_instance" "this" {
@@ -127,6 +159,7 @@ resource "aws_instance" "this" {
   ]
   subnet_id = aws_subnet.public.id
   associate_public_ip_address = "true"
+  private_ip = "10.1.1.10"
 
   root_block_device {
     volume_type = "gp2"
