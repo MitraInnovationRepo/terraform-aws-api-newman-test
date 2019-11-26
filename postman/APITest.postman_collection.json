@@ -1,0 +1,1194 @@
+{
+	"info": {
+		"_postman_id": "e69881c8-7c48-42fd-b2b3-e015c37bf541",
+		"name": "APITest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "CreateApplication",
+			"item": [
+				{
+					"name": "CallingDynamicClientRegStoreEndpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Received Store Client Credential\"] = responseCode.code === 200;",
+									"",
+									"//assign client credential to the environment variable to resuse them in next call",
+									"",
+									"postman.setEnvironmentVariable (\"storeConsumerkey\", jsonData.clientId);",
+									"postman.setEnvironmentVariable (\"storeConsumersecret\", jsonData.clientSecret);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									"var CryptoJS = require(\"crypto-js\");",
+									"var basicToken = postman.getEnvironmentVariable(\"storeUsername\")+\":\"+postman.getEnvironmentVariable(\"storePassword\")",
+									"",
+									"var rawStr = CryptoJS.enc.Utf8.parse(basicToken)",
+									"var base64 = CryptoJS.enc.Base64.stringify(rawStr)",
+									"",
+									"",
+									"postman.setEnvironmentVariable (\"storeBasicToken\", base64)",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic  {{storeBasicToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"callbackUrl\": \"www.google.lk\",\n    \"clientName\": \"rest_api_store\",\n    \"owner\": \"admin\",\n    \"grantType\": \"password refresh_token\",\n    \"saasApp\": true\n}"
+						},
+						"url": {
+							"raw": "{{storeHost}}/client-registration/v0.14/register",
+							"host": [
+								"{{storeHost}}"
+							],
+							"path": [
+								"client-registration",
+								"v0.14",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CallingDynamicClientStoreGetAccessToken",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Generate Store Access Token\"] = responseCode.code === 200;",
+									"tests[\"Access Token is not blank\"] = jsonData.access_token !== \"\";",
+									"postman.setEnvironmentVariable (\"storeAccessToken\", jsonData.access_token);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									"var CryptoJS = require(\"crypto-js\");",
+									"var basicEnvToken = postman.getEnvironmentVariable(\"storeConsumerkey\")+\":\"+postman.getEnvironmentVariable(\"storeConsumersecret\")",
+									"",
+									"var rawStr = CryptoJS.enc.Utf8.parse(basicEnvToken)",
+									"var envBase64 = CryptoJS.enc.Base64.stringify(rawStr)",
+									"",
+									"",
+									"postman.setEnvironmentVariable (\"storeBasicToken\", envBase64)",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic {{storeBasicToken}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{storeUsername}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{storePassword}}",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "apim:subscribe",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{tokenHost}}/token",
+							"host": [
+								"{{tokenHost}}"
+							],
+							"path": [
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetApplicationID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b739fa33-e401-4311-bfc3-54b1afb991d8",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"if(jsonData.count >0){",
+									"var applicationId =jsonData.list[0].applicationId;",
+									"postman.setEnvironmentVariable (\"applicationId\", applicationId);",
+									"postman.setEnvironmentVariable (\"isApplicationExist\", true);",
+									"postman.setNextRequest(\"GetKeyDetailsofApplication\")",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{storeAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{storeHost}}/api/am/store/v0.14/applications?query={{applicationName}}",
+							"host": [
+								"{{storeHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"store",
+								"v0.14",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "{{applicationName}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CreateNewApplication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"New Application has been Created Successfully\"] = responseCode.code === 201;",
+									"if(responseCode.code === 201){",
+									"console.log(\"Created Application Name: \"+ postman.getEnvironmentVariable(\"applicationName\"))",
+									"console.log(\"Created Application ID: \"+ postman.getEnvironmentVariable(\"applicationId\"))",
+									"postman.setEnvironmentVariable (\"applicationId\", jsonData.applicationId);",
+									"}",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{storeAccessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"throttlingTier\": \"Unlimited\",\r\n    \"description\": \"sample app description\",\r\n    \"name\": \"{{applicationName}}\"\r\n}"
+						},
+						"url": {
+							"raw": "{{storeHost}}/api/am/store/v0.14/applications",
+							"host": [
+								"{{storeHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"store",
+								"v0.14",
+								"applications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetKeyDetailsofApplication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "cda29fe9-4c37-4bc5-9955-21625d6e9475",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);\r",
+									"\r",
+									"if(responseCode.code === 200){\r",
+									"\tif(jsonData.keys.length > 0){\r",
+									"\t\tpostman.setEnvironmentVariable (\"apiConsumerkey\", jsonData.keys[0].consumerKey);\r",
+									"\t\tpostman.setEnvironmentVariable (\"apiConsumersecret\", jsonData.keys[0].consumerSecret);\r",
+									"\t\tpostman.setNextRequest(\"CallingDynamicClientRegPublisherEndpoint\")\r",
+									"\t}else if(jsonData.keys.length === 0){\r",
+									"\t\tpostman.setNextRequest(\"GenerateApplicationKey\")\r",
+									"\t\tconsole.log(\"not there\");\r",
+									"\t}\t\r",
+									"\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{storeAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{storeHost}}/api/am/store/v0.14/applications/{{applicationId}}",
+							"host": [
+								"{{storeHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"store",
+								"v0.14",
+								"applications",
+								"{{applicationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GenerateApplicationKey",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Generated Application Key\"] = responseCode.code === 200;",
+									"",
+									"postman.setEnvironmentVariable (\"apiConsumerkey\", jsonData.consumerKey);",
+									"postman.setEnvironmentVariable (\"apiConsumersecret\", jsonData.consumerSecret);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{storeAccessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"validityTime\": \"3600\",\r\n  \"keyType\": \"PRODUCTION\",\r\n  \"accessAllowDomains\": [\"ALL\"\r\n  ]\r\n}"
+						},
+						"url": {
+							"raw": "{{storeHost}}/api/am/store/v0.14/applications/generate-keys?applicationId={{applicationId}}",
+							"host": [
+								"{{storeHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"store",
+								"v0.14",
+								"applications",
+								"generate-keys"
+							],
+							"query": [
+								{
+									"key": "applicationId",
+									"value": "{{applicationId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CreateNewSubscription",
+			"item": [
+				{
+					"name": "CallingDynamicClientRegPublisherEndpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Received Publisher Client Credentials\"] = responseCode.code == 200;",
+									"",
+									"postman.setEnvironmentVariable (\"publisherConsumerkey\", jsonData.clientId);",
+									"postman.setEnvironmentVariable (\"publisherConsumersecret\", jsonData.clientSecret);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									"var CryptoJS = require(\"crypto-js\");",
+									"var publihserEnvBasicToken = postman.getEnvironmentVariable(\"publisherUsername\")+\":\"+postman.getEnvironmentVariable(\"publisherPassword\")",
+									"",
+									"var rawStr = CryptoJS.enc.Utf8.parse(publihserEnvBasicToken)",
+									"var base64 = CryptoJS.enc.Base64.stringify(rawStr)",
+									"",
+									"",
+									"postman.setEnvironmentVariable (\"publisherBasicToken\", base64)",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic {{publisherBasicToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"callbackUrl\": \"www.google.lk\",\r\n    \"clientName\": \"rest_api_publisher\",\r\n    \"owner\": \"admin\",\r\n    \"grantType\": \"password refresh_token\",\r\n    \"saasApp\": true\r\n}"
+						},
+						"url": {
+							"raw": "{{publisherHost}}/client-registration/v0.14/register",
+							"host": [
+								"{{publisherHost}}"
+							],
+							"path": [
+								"client-registration",
+								"v0.14",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CallingDynamicClientPublisherGetAccessToken",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Generated Publisher AccessToken\"] = responseCode.code === 200;",
+									"tests[\"Access Token is not blank\"] = jsonData.access_token !== \"\";",
+									"",
+									"postman.setEnvironmentVariable (\"publisherAccessToken\", jsonData.access_token);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									"var CryptoJS = require(\"crypto-js\");",
+									"var basicEnvToken = postman.getEnvironmentVariable(\"publisherConsumerkey\")+\":\"+postman.getEnvironmentVariable(\"publisherConsumersecret\")",
+									"",
+									"var rawStr = CryptoJS.enc.Utf8.parse(basicEnvToken)",
+									"var envBase64 = CryptoJS.enc.Base64.stringify(rawStr)",
+									"console.log(`Encrypted value: ${envBase64}`)",
+									"",
+									"postman.setEnvironmentVariable (\"publisherBasicToken\", envBase64)",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic {{publisherBasicToken}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{publisherUsername}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{publisherPassword}}",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "apim:api_view",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{tokenHost}}/token",
+							"host": [
+								"{{tokenHost}}"
+							],
+							"path": [
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetApiIDFromPublisher",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"tests[\"Successfully Received API details\"] = responseCode.code == 200;",
+									"",
+									"if(jsonData.count >0){",
+									"var applicationId =jsonData.list[0].id;",
+									"postman.setEnvironmentVariable (\"apiId\", applicationId);",
+									"tests[\"Successfully found the API ID\"] = true;",
+									"}else{",
+									"     tests[\"API is not found\"] = false;",
+									"}",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{publisherAccessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{publisherHost}}/api/am/publisher/v0.14/apis?query={{apiName}}",
+							"host": [
+								"{{publisherHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"publisher",
+								"v0.14",
+								"apis"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "{{apiName}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AddNewSubscription",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Added New Scubscription\"] = responseCode.code === 201;",
+									"",
+									"postman.setEnvironmentVariable (\"subscriptionId\", jsonData.subscriptionId);",
+									"",
+									"if(responseCode.code === 409){",
+									"    \tpostman.setNextRequest(\"AccessTokenGeneration\")",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{storeAccessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"tier\": \"Unlimited\",\r\n    \"apiIdentifier\": \"{{apiId}}\",\r\n    \"applicationId\": \"{{applicationId}}\"\r\n}"
+						},
+						"url": {
+							"raw": "{{publisherHost}}/api/am/store/v0.14/subscriptions",
+							"host": [
+								"{{publisherHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"store",
+								"v0.14",
+								"subscriptions"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "APITest",
+			"item": [
+				{
+					"name": "AccessTokenGeneration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "974a5899-48e5-4299-bae7-011732e6e62a",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Generated API Access Token\"] = responseCode.code === 200;",
+									"tests[\"Access Token is not blank\"] = jsonData.access_token !== \"\";",
+									"",
+									"postman.setEnvironmentVariable (\"apiAccessToken\", jsonData.access_token);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fe632896-68f5-4daf-a78f-e1d79cd18f4f",
+								"exec": [
+									"var CryptoJS = require(\"crypto-js\");",
+									"var basicToken = postman.getEnvironmentVariable(\"apiConsumerkey\")+\":\"+postman.getEnvironmentVariable(\"apiConsumersecret\")",
+									"",
+									"var rawStr = CryptoJS.enc.Utf8.parse(basicToken)",
+									"var base64 = CryptoJS.enc.Base64.stringify(rawStr)",
+									"",
+									"",
+									"postman.setEnvironmentVariable(\"apiBasicToken\",base64)",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic {{apiBasicToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "text/plain",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{tokenHost}}/token",
+							"host": [
+								"{{tokenHost}}"
+							],
+							"path": [
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CallGetMenu",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "086802da-932f-49ce-98b2-c21c4b5c2fdc",
+								"exec": [
+									"tests[\"Successfully Call the API\"] = responseCode.code === 200;",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{apiAccessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{apiHost}}/pizzashack/1.0.0/menu",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"pizzashack",
+								"1.0.0",
+								"menu"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CallPostOrder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "086802da-932f-49ce-98b2-c21c4b5c2fdc",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"tests[\"Successfully Call the API\"] = responseCode.code === 201;",
+									"postman.setEnvironmentVariable (\"api_test_orderId\", jsonData.orderId);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{apiAccessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"customerName\": \"Renuka Fernando\",\r\n  \"delivered\": true,\r\n  \"address\": \"Mitrai/DigtalBU/SETF\",\r\n  \"pizzaType\": \"California Pizza\",\r\n  \"creditCardNumber\": \"112233445566778899\",\r\n  \"quantity\": 112\r\n}"
+						},
+						"url": {
+							"raw": "{{apiHost}}/pizzashack/1.0.0/order",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"pizzashack",
+								"1.0.0",
+								"order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CallPutToUpdateOrderQuantity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "086802da-932f-49ce-98b2-c21c4b5c2fdc",
+								"exec": [
+									"tests[\"Successfully Call the API\"] = responseCode.code === 200;",
+									" postman.setNextRequest(\"RemoveSubscription\");",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{apiAccessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"customerName\": \"Renuka Fernando\",\r\n  \"delivered\": true,\r\n  \"address\": \"Mitrai/DigtalBU/SETF\",\r\n  \"pizzaType\": \"California Pizza\",\r\n  \"creditCardNumber\": \"112233445566778899\",\r\n  \"quantity\": 12\r\n}"
+						},
+						"url": {
+							"raw": "{{apiHost}}/pizzashack/1.0.0/order/{{api_test_orderId}}",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"pizzashack",
+								"1.0.0",
+								"order",
+								"{{api_test_orderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CallGetOrder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "086802da-932f-49ce-98b2-c21c4b5c2fdc",
+								"exec": [
+									"tests[\"Successfully Call the API\"] = responseCode.code === 200;",
+									" postman.setNextRequest(\"RemoveSubscription\");",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{apiAccessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{apiHost}}/pizzashack/1.0.0/order/{{api_test_orderId}}",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"pizzashack",
+								"1.0.0",
+								"order",
+								"{{api_test_orderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CallGetMenu Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "086802da-932f-49ce-98b2-c21c4b5c2fdc",
+								"exec": [
+									"tests[\"Successfully Call the API\"] = responseCode.code === 200;",
+									" postman.setNextRequest(\"RemoveSubscription\");",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{apiHost}}/pizzashack/1.0.0/order/{{api_test_orderId}}",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"pizzashack",
+								"1.0.0",
+								"order",
+								"{{api_test_orderId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "RemoveSubscription",
+			"item": [
+				{
+					"name": "RemoveSubscription",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4545e21f-fd17-4f60-9ea7-7ec71b8ad6fe",
+								"exec": [
+									"tests[\"Successfully Remove the Subscription\"] = responseCode.code === 200;"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{storeAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{publisherHost}}/api/am/store/v0.14/subscriptions/{{subscriptionId}}",
+							"host": [
+								"{{publisherHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"store",
+								"v0.14",
+								"subscriptions",
+								"{{subscriptionId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RemoveApplication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "00e8bbc2-46fd-4450-8018-6fd825e25e2e",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{storeAccessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{storeHost}}/api/am/store/v0.14/applications/{{applicationId}}",
+							"host": [
+								"{{storeHost}}"
+							],
+							"path": [
+								"api",
+								"am",
+								"store",
+								"v0.14",
+								"applications",
+								"{{applicationId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "0485f3f5-b44d-4571-8720-509203f2e09d",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "f7003c0f-32f8-48d7-8e23-ede45c73c6ed",
+				"type": "text/javascript",
+				"exec": [
+					"if(responseCode.code != 200 && responseCode.code != 201){",
+					"    postman.setNextRequest(null);",
+					"}"
+				]
+			}
+		}
+	]
+}
