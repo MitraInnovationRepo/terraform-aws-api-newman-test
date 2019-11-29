@@ -4,8 +4,7 @@ AWS pipeline example for API testing using Newman.
 
 ## 1. Use-case
 
-
-
+This repository contains code to spin WSO2 API Manager instance in AWS EC2 instance, AWS CodePipeline that executes Newman tests and will not deploy anything.
 
 ## 2. Code Structure
 
@@ -104,7 +103,7 @@ Visit the following link.
 https://ec2-{{IP address with replacing dots with dashes}}.us-east-2.compute.amazonaws.com:9443/publisher
 ```
 
-Sign in to the API Manager using following user name and password.
+Sign in to the API Manager using following user name and password. Deploy the default API.
 
 ```bash
 user: admin
@@ -116,9 +115,15 @@ password: admin
 
 ![APIM publisher](resources/deploy_default_api_2.png)
 
-Goto the [pipeline](https://us-east-2.console.aws.amazon.com/codesuite/codepipeline/pipelines?region=us-east-2) and retry the source.
+### 3.6. Deploy Default API
 
-### 3.5. Destruct infrastructure
+Goto the [pipeline](https://us-east-2.console.aws.amazon.com/codesuite/codepipeline/pipelines?region=us-east-2) and disable the deploy transaction.
+
+![APIM publisher disable deploy transaction](resources/disable_deploy.png)
+
+Retry the build.
+
+### 3.7. Destruct infrastructure
 
 Execute the following.
 
